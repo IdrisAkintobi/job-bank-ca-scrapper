@@ -8,7 +8,7 @@ export class AppController {
 
     @Get('/')
     async scrapeJobBank() {
-        await this.scraperService.scrapeJobBank('psw', 'ontario');
+        await this.scraperService.scrapeJobBank('psw', '', 3);
         return { message: 'done' };
     }
 }

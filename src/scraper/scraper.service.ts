@@ -52,7 +52,6 @@ export class ScraperService {
         console.log('length', jobSearchResult.length);
         console.log('getting job details');
         await this.processResult(jobSearchResult, '-search');
-        return;
     }
 
     async scrapeLMIAJobs(approved = true, noOfResultPages = 2) {
@@ -74,7 +73,6 @@ export class ScraperService {
         console.log('getting job details');
         const postfix = approved ? '-approved' : '-pending';
         await this.processResult(jobSearchResult, postfix);
-        return;
     }
 
     private async getJobDetails(jobSearchResult: JobSearchResult) {
@@ -109,7 +107,6 @@ export class ScraperService {
         }
 
         await page.close();
-        return;
     }
 
     private async getJobSearchResult(page: Page): Promise<Array<JobSearchResult>> {
@@ -178,14 +175,13 @@ export class ScraperService {
     }
 
     private async loadMoreResult(page: Page, noOfResultPages: number) {
-        // let moreResults: Locator;
         let moreResults = await page.$('#moreresultbutton');
         let currentPage = 1;
 
         while (moreResults && currentPage < noOfResultPages) {
             try {
                 await moreResults.click({ force: true });
-                await page.waitForTimeout(this.timeout / 5);
+                await page.waitForTimeout(this.timeout / 4);
                 moreResults = await page.$('#moreresultbutton');
                 currentPage++;
             } catch (error) {
@@ -205,16 +201,19 @@ export class ScraperService {
             }
         }
 
-        console.log('job details request failed', failedToGetJobDetail);
         await this.csvService.writeCsv(this.internalJobsResult, `internal-result${filePostfix}`);
         await this.csvService.writeCsv(
             this.externalJobsResult,
             `external-result${filePostfix}`,
             false,
         );
+        if (failedToGetJobDetail.length)
+            console.log('job details request failed', failedToGetJobDetail);
+        console.log('job details request successful');
+        return;
     }
 
-    onModuleDestroy() {
-        this.browser.close();
+    async onModuleDestroy() {
+        await this.browser.close();
     }
 }
