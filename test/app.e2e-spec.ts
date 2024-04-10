@@ -16,6 +16,6 @@ describe.skip('AppController (e2e)', () => {
     });
 
     it('/ (GET)', () => {
-        return request(app.getHttpServer()).get('/').expect(200).expect('Scraping Job Bank...');
+        return request(app.getHttpServer()).get('/').expect(200).expect({ message: 'done' });
     });
 });

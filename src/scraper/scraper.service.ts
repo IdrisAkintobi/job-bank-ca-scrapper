@@ -1,19 +1,13 @@
-// src/scraper/scraper.service.ts
 import { Inject, Injectable } from '@nestjs/common';
 import { load } from 'cheerio';
 import { Browser, Page } from 'playwright';
 
-import { CsvService } from '../csv-writer/csv-writer.service';
-import { JobSearchResult } from '../domain/interface.job-search-result';
+import { CsvService } from '../csv-writer/csv-writer.service.js';
+import { JobSearchResult } from '../domain/interface.job-search-result.js';
 
 const baseUrl = 'https://www.jobbank.gc.ca';
 // const email: 'limlomaspi@gufum.com';
 // const password: '1Limlomaspi@gufum.com';
-// const url = https://www.jobbank.gc.ca/jobsearch/jobsearch?fsrc=32#results-list-content
-const LMIAApprovedEmployer =
-    'https://www.jobbank.gc.ca/jobsearch/jobsearch?flg=E&page=1&sort=M&fsrc=32&fskl=101020';
-const LMIAPendingEmployer =
-    'https://www.jobbank.gc.ca/jobsearch/jobsearch?flg=E&page=1&sort=M&fsrc=32&fskl=101010';
 
 @Injectable()
 export class ScraperService {
@@ -30,15 +24,14 @@ export class ScraperService {
     async scrapeJobBank(title: string, location: string, noOfResultPages = 2) {
         const page = await this.browser.newPage();
         page.setDefaultTimeout(this.timeout);
-
         await page.goto(baseUrl);
         await this.clearPopUp(page);
 
         const jobTitle = page.getByPlaceholder('Example: Cook');
-        await jobTitle.fill(title);
+        await jobTitle.fill(title || '');
 
         const jobLocation = page.getByPlaceholder('Location');
-        await jobLocation.fill(location);
+        await jobLocation.fill(location || '');
 
         await page.locator('#searchButton').click({ force: true });
 
@@ -51,28 +44,25 @@ export class ScraperService {
         await page.close();
         console.log('length', jobSearchResult.length);
         console.log('getting job details');
-        await this.processResult(jobSearchResult, '-search');
+        // await this.processResult(jobSearchResult, '-search');
     }
 
-    async scrapeLMIAJobs(approved = true, noOfResultPages = 2) {
+    async scrapeJobSearchResultPage(url: string, noOfResultPages = 2) {
         const page = await this.browser.newPage();
         page.setDefaultTimeout(this.timeout);
-
-        const url = approved ? LMIAApprovedEmployer : LMIAPendingEmployer;
         await page.goto(url);
         await this.clearPopUp(page);
 
         await page.locator('#results-list-content').waitFor({ state: 'visible' });
 
-        await this.loadMoreResult(page, noOfResultPages);
+        await this.loadMoreResult(page, noOfResultPages - 1);
 
         const jobSearchResult = await this.getJobSearchResult(page);
 
         await page.close();
         console.log('length', jobSearchResult.length);
         console.log('getting job details');
-        const postfix = approved ? '-approved' : '-pending';
-        await this.processResult(jobSearchResult, postfix);
+        // await this.processResult(jobSearchResult, '-page');
     }
 
     private async getJobDetails(jobSearchResult: JobSearchResult) {
@@ -176,12 +166,12 @@ export class ScraperService {
 
     private async loadMoreResult(page: Page, noOfResultPages: number) {
         let moreResults = await page.$('#moreresultbutton');
-        let currentPage = 1;
+        let currentPage = 0;
 
         while (moreResults && currentPage < noOfResultPages) {
             try {
                 await moreResults.click({ force: true });
-                await page.waitForTimeout(this.timeout / 4);
+                await page.waitForTimeout(this.timeout / 5);
                 moreResults = await page.$('#moreresultbutton');
                 currentPage++;
             } catch (error) {

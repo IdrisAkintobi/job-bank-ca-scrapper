@@ -2,11 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { createObjectCsvWriter } from 'csv-writer';
 import { existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { JobSearchResult } from '../domain/interface.job-search-result';
+
+import { JobSearchResult } from '../domain/interface.job-search-result.js';
 
 @Injectable()
 export class CsvService {
-    private readonly rootResultsFolderPath = join(__dirname, '..', '..', 'results');
+    private readonly rootResultsFolderPath = join(process.cwd(), 'results');
     constructor() {
         if (!existsSync(this.rootResultsFolderPath)) {
             mkdirSync(this.rootResultsFolderPath);

@@ -1,9 +1,10 @@
 // src/app.module.ts
 import { Module } from '@nestjs/common';
 import { chromium } from 'playwright';
-import { AppController } from './app.controller';
-import { CsvService } from './csv-writer/csv-writer.service';
-import { ScraperService } from './scraper/scraper.service';
+
+import { AppController } from './app.controller.js';
+import { CsvService } from './csv-writer/csv-writer.service.js';
+import { ScraperService } from './scraper/scraper.service.js';
 
 @Module({
     imports: [],
