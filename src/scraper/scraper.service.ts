@@ -41,7 +41,7 @@ export class ScraperService {
 
         console.log('length', jobSearchResult.length);
         console.log('getting job details');
-        await this.processResult(jobSearchResult, '-search');
+        await this.processResult(page, jobSearchResult, '-search');
         await page.close();
     }
 
@@ -59,12 +59,11 @@ export class ScraperService {
 
         console.log('length', jobSearchResult.length);
         console.log('getting job details');
-        await this.processResult(jobSearchResult, '-page');
+        await this.processResult(page, jobSearchResult, '-page');
         await page.close();
     }
 
-    private async getJobDetails(jobSearchResult: JobSearchResult) {
-        const page = await this.browser.newPage();
+    private async getJobDetails(page: Page, jobSearchResult: JobSearchResult) {
         //set default timeout
         page.setDefaultTimeout(this.timeout);
         await page.goto(jobSearchResult.href);
@@ -94,8 +93,6 @@ export class ScraperService {
             this.externalJobsResult[jobTitle] = this.externalJobsResult[jobTitle] || [];
             this.externalJobsResult[jobTitle].push({ expiry, ...rest });
         }
-
-        await page.close();
     }
 
     private async getJobSearchResult(page: Page): Promise<Array<JobSearchResult>> {
@@ -179,11 +176,15 @@ export class ScraperService {
         }
     }
 
-    private async processResult(jobSearchResult: JobSearchResult[], filePostfix?: string) {
+    private async processResult(
+        page: Page,
+        jobSearchResult: JobSearchResult[],
+        filePostfix?: string,
+    ) {
         const failedToGetJobDetail = [];
         for (const job of jobSearchResult) {
             try {
-                await this.getJobDetails(job);
+                await this.getJobDetails(page, job);
             } catch (error) {
                 failedToGetJobDetail.push(job);
                 console.log(`failed to get details of ${failedToGetJobDetail.length} jobs`);

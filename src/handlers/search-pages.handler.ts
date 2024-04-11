@@ -13,7 +13,6 @@ export const searchPagesHandler = async (): Promise<{ noOfPages: number }> => {
 
                 return true;
             },
-            filter: (input: string) => Number(input),
         },
     ]);
 };
