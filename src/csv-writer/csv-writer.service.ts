@@ -35,14 +35,24 @@ export class CsvService {
         // Flatten the object and write to CSV
         const records = [];
         for (const [jobTitle, jobDetails] of Object.entries(data)) {
-            for (let i = 0; i < jobDetails.length; i++) {
+            const uniqueJobDetails = await this.removeDuplicateEmail(jobDetails);
+            await this.sortJobDetailsByBusiness(jobDetails);
+            for (const job of uniqueJobDetails) {
                 records.push({
-                    jobTitle: i === 0 ? jobTitle : '',
-                    ...jobDetails[i],
+                    jobTitle,
+                    ...job,
                 });
             }
         }
 
         await csvWriter.writeRecords(records);
+    }
+
+    async sortJobDetailsByBusiness(data: Array<Omit<JobSearchResult, 'jobTitle'>>) {
+        return data.sort((a, b) => a.business.localeCompare(b.business));
+    }
+
+    async removeDuplicateEmail(data: Array<Omit<JobSearchResult, 'jobTitle'>>) {
+        return [...new Map(data.map(item => [item.email, item])).values()];
     }
 }

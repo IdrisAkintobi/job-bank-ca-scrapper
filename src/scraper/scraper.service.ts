@@ -8,7 +8,6 @@ import { JobSearchResult } from '../domain/interface.job-search-result.js';
 const baseUrl = 'https://www.jobbank.gc.ca';
 // const email: 'limlomaspi@gufum.com';
 // const password: '1Limlomaspi@gufum.com';
-
 @Injectable()
 export class ScraperService {
     private timeout = 15000;
@@ -44,7 +43,7 @@ export class ScraperService {
         await page.close();
         console.log('length', jobSearchResult.length);
         console.log('getting job details');
-        // await this.processResult(jobSearchResult, '-search');
+        await this.processResult(jobSearchResult, '-search');
     }
 
     async scrapeJobSearchResultPage(url: string, noOfResultPages = 2) {
@@ -62,7 +61,7 @@ export class ScraperService {
         await page.close();
         console.log('length', jobSearchResult.length);
         console.log('getting job details');
-        // await this.processResult(jobSearchResult, '-page');
+        await this.processResult(jobSearchResult, '-page');
     }
 
     private async getJobDetails(jobSearchResult: JobSearchResult) {
