@@ -1,16 +1,15 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { load } from 'cheerio';
+import { CheerioAPI, load } from 'cheerio';
 import { Browser, Page } from 'playwright';
 
 import { CsvService } from '../csv-writer/csv-writer.service.js';
 import { JobSearchResult } from '../domain/interface.job-search-result.js';
 
 const baseUrl = 'https://www.jobbank.gc.ca';
-// const email: 'limlomaspi@gufum.com';
-// const password: '1Limlomaspi@gufum.com';
+
 @Injectable()
 export class ScraperService {
-    private timeout = 15000;
+    private timeout = 30000;
 
     private internalJobsResult: Record<string, Omit<JobSearchResult, 'jobTitle'>[]> = {};
     private externalJobsResult: Record<string, Omit<JobSearchResult, 'jobTitle'>[]> = {};
@@ -40,10 +39,10 @@ export class ScraperService {
 
         const jobSearchResult = await this.getJobSearchResult(page);
 
-        await page.close();
         console.log('length', jobSearchResult.length);
         console.log('getting job details');
         await this.processResult(jobSearchResult, '-search');
+        await page.close();
     }
 
     async scrapeJobSearchResultPage(url: string, noOfResultPages = 2) {
@@ -58,10 +57,10 @@ export class ScraperService {
 
         const jobSearchResult = await this.getJobSearchResult(page);
 
-        await page.close();
         console.log('length', jobSearchResult.length);
         console.log('getting job details');
         await this.processResult(jobSearchResult, '-page');
+        await page.close();
     }
 
     private async getJobDetails(jobSearchResult: JobSearchResult) {
@@ -76,22 +75,23 @@ export class ScraperService {
         const internalJob = await page.$('#applynowbutton');
 
         const { jobTitle, ...rest } = jobSearchResult;
-        const $ = load(await page.content());
-        const expiry = $('p[property="validThrough"]').text().trim();
+        let $: CheerioAPI;
         if (internalJob) {
             await internalJob.click({ force: true });
             const applicationDetails = page.locator('#howtoapply');
-            await applicationDetails.waitFor({ state: 'visible', timeout: this.timeout * 2 });
+            await applicationDetails.waitFor({ state: 'visible' });
+            $ = load(await page.content());
             const email = $('#howtoapply a[href^="mailto:"]').text().trim();
+            const expiry = $('p[property="validThrough"]').text().trim();
             // Check if the email element exists
             if (email) {
-                this.internalJobsResult[jobTitle] =
-                    this.internalJobsResult[jobSearchResult.jobTitle] || [];
+                this.internalJobsResult[jobTitle] = this.internalJobsResult[jobTitle] || [];
                 this.internalJobsResult[jobTitle].push({ email, expiry, ...rest });
             }
         } else if (externalJob) {
-            this.externalJobsResult[jobTitle] =
-                this.externalJobsResult[jobSearchResult.jobTitle] || [];
+            $ = load(await page.content());
+            const expiry = $('p[property="validThrough"]').text().trim();
+            this.externalJobsResult[jobTitle] = this.externalJobsResult[jobTitle] || [];
             this.externalJobsResult[jobTitle].push({ expiry, ...rest });
         }
 

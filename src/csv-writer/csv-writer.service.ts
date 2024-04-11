@@ -35,7 +35,9 @@ export class CsvService {
         // Flatten the object and write to CSV
         const records = [];
         for (const [jobTitle, jobDetails] of Object.entries(data)) {
-            const uniqueJobDetails = await this.removeDuplicateEmail(jobDetails);
+            const uniqueJobDetails = internal
+                ? await this.removeDuplicateEmail(jobDetails)
+                : jobDetails;
             await this.sortJobDetailsByBusiness(jobDetails);
             for (const job of uniqueJobDetails) {
                 records.push({
@@ -53,6 +55,10 @@ export class CsvService {
     }
 
     async removeDuplicateEmail(data: Array<Omit<JobSearchResult, 'jobTitle'>>) {
-        return [...new Map(data.map(item => [item.email, item])).values()];
+        return [
+            ...new Map(
+                data.map(item => [item.email || Math.random().toString().substring(2, 8), item]),
+            ).values(),
+        ];
     }
 }
