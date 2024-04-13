@@ -7,4 +7,5 @@ export interface JobSearchResult {
     date: string;
     email?: string;
     expiry?: string;
+    emailSent?: 1 | 0;
 }

@@ -3,7 +3,9 @@ import { CheerioAPI, load } from 'cheerio';
 import { Browser, Page } from 'playwright';
 
 import { CsvService } from '../csv-writer/csv-writer.service.js';
+import { DbService } from '../db/db.service.js';
 import { JobSearchResult } from '../domain/interface.job-search-result.js';
+import { Utils } from '../utils/utils.js';
 
 const baseUrl = 'https://www.jobbank.gc.ca';
 
@@ -17,6 +19,7 @@ export class ScraperService {
     constructor(
         @Inject('BROWSER') private readonly browser: Browser,
         @Inject(CsvService) private readonly csvService: CsvService,
+        @Inject(DbService) private readonly dbService: DbService,
     ) {}
 
     async scrapeJobBank(title: string, location: string, noOfResultPages = 2) {
@@ -191,12 +194,15 @@ export class ScraperService {
             }
         }
 
-        await this.csvService.writeCsv(this.internalJobsResult, `internal-result${filePostfix}`);
-        await this.csvService.writeCsv(
-            this.externalJobsResult,
-            `external-result${filePostfix}`,
-            false,
-        );
+        const cleanedInternalJobs = await Utils.cleanData(this.internalJobsResult);
+        const cleanedExternalJobs = await Utils.cleanData(this.externalJobsResult);
+
+        // Write to CSV
+        await this.csvService.writeCsv(cleanedInternalJobs, `internal-result${filePostfix}`);
+        await this.csvService.writeCsv(cleanedExternalJobs, `external-result${filePostfix}`, false);
+
+        // Write to DB
+        this.dbService.saveJobSearchResults(cleanedInternalJobs);
         if (failedToGetJobDetail.length)
             console.log('job details request failed', failedToGetJobDetail);
         console.log('job details request successful');

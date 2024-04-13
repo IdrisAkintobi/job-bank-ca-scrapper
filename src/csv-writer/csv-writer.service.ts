@@ -13,11 +13,7 @@ export class CsvService {
             mkdirSync(this.rootResultsFolderPath);
         }
     }
-    async writeCsv(
-        data: Record<string, Omit<JobSearchResult, 'jobTitle'>[]>,
-        fileName: string,
-        internal = true,
-    ) {
+    async writeCsv(data: JobSearchResult[], fileName: string, internal = true) {
         const csvWriter = createObjectCsvWriter({
             path: join(this.rootResultsFolderPath, `${fileName}.csv`),
             header: [
@@ -32,33 +28,6 @@ export class CsvService {
             ],
         });
 
-        // Flatten the object and write to CSV
-        const records = [];
-        for (const [jobTitle, jobDetails] of Object.entries(data)) {
-            const uniqueJobDetails = internal
-                ? await this.removeDuplicateEmail(jobDetails)
-                : jobDetails;
-            await this.sortJobDetailsByBusiness(jobDetails);
-            for (const job of uniqueJobDetails) {
-                records.push({
-                    jobTitle,
-                    ...job,
-                });
-            }
-        }
-
-        await csvWriter.writeRecords(records);
-    }
-
-    async sortJobDetailsByBusiness(data: Array<Omit<JobSearchResult, 'jobTitle'>>) {
-        return data.sort((a, b) => a.business.localeCompare(b.business));
-    }
-
-    async removeDuplicateEmail(data: Array<Omit<JobSearchResult, 'jobTitle'>>) {
-        return [
-            ...new Map(
-                data.map(item => [item.email || Math.random().toString().substring(2, 8), item]),
-            ).values(),
-        ];
+        await csvWriter.writeRecords(data);
     }
 }

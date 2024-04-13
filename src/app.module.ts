@@ -1,9 +1,10 @@
-// src/app.module.ts
 import { Module } from '@nestjs/common';
+import Database from 'better-sqlite3';
 import { chromium } from 'playwright';
 
 import { AppController } from './app.controller.js';
 import { CsvService } from './csv-writer/csv-writer.service.js';
+import { DbService } from './db/db.service.js';
 import { ScraperService } from './scraper/scraper.service.js';
 
 @Module({
@@ -12,13 +13,19 @@ import { ScraperService } from './scraper/scraper.service.js';
     providers: [
         ScraperService,
         CsvService,
+        DbService,
         {
             provide: 'BROWSER',
             useFactory: async () => {
                 return await chromium.launch();
             },
         },
+        {
+            provide: 'DATABASE',
+            useFactory: () => {
+                return new Database('db.sqlite');
+            },
+        },
     ],
-    exports: ['BROWSER'],
 })
 export class AppModule {}
