@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { CheerioAPI, load } from 'cheerio';
 import { Browser, Page } from 'playwright';
 
@@ -6,8 +7,6 @@ import { CsvService } from '../csv-writer/csv-writer.service.js';
 import { DbService } from '../db/db.service.js';
 import { JobSearchResult } from '../domain/interface.job-search-result.js';
 import { Utils } from '../utils/utils.js';
-
-const baseUrl = 'https://www.jobbank.gc.ca';
 
 @Injectable()
 export class ScraperService {
@@ -20,9 +19,11 @@ export class ScraperService {
         @Inject('BROWSER') private readonly browser: Browser,
         @Inject(CsvService) private readonly csvService: CsvService,
         @Inject(DbService) private readonly dbService: DbService,
+        private readonly configService: ConfigService,
     ) {}
 
     async scrapeJobBank(title: string, location: string, noOfResultPages = 2) {
+        const baseUrl = this.configService.get('BASE_URL');
         const page = await this.browser.newPage();
         page.setDefaultTimeout(this.timeout);
         await page.goto(baseUrl);

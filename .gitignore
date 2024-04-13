@@ -12,8 +12,9 @@ yarn-error.log*
 lerna-debug.log*
 
 /results
-/email-template
 db.sqlite
+/email-template
+.env
 
 # OS
 .DS_Store
