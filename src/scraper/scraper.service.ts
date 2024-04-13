@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { CheerioAPI, load } from 'cheerio';
 import { Browser, Page } from 'playwright';
 
@@ -6,8 +7,6 @@ import { CsvService } from '../csv-writer/csv-writer.service.js';
 import { DbService } from '../db/db.service.js';
 import { JobSearchResult } from '../domain/interface.job-search-result.js';
 import { Utils } from '../utils/utils.js';
-
-const baseUrl = 'https://www.jobbank.gc.ca';
 
 @Injectable()
 export class ScraperService {
@@ -20,9 +19,11 @@ export class ScraperService {
         @Inject('BROWSER') private readonly browser: Browser,
         @Inject(CsvService) private readonly csvService: CsvService,
         @Inject(DbService) private readonly dbService: DbService,
+        private readonly configService: ConfigService,
     ) {}
 
     async scrapeJobBank(title: string, location: string, noOfResultPages = 2) {
+        const baseUrl = this.configService.get('BASE_URL');
         const page = await this.browser.newPage();
         page.setDefaultTimeout(this.timeout);
         await page.goto(baseUrl);
@@ -42,8 +43,6 @@ export class ScraperService {
 
         const jobSearchResult = await this.getJobSearchResult(page);
 
-        console.log('length', jobSearchResult.length);
-        console.log('getting job details');
         await this.processResult(page, jobSearchResult, '-search');
         await page.close();
     }
@@ -60,8 +59,6 @@ export class ScraperService {
 
         const jobSearchResult = await this.getJobSearchResult(page);
 
-        console.log('length', jobSearchResult.length);
-        console.log('getting job details');
         await this.processResult(page, jobSearchResult, '-page');
         await page.close();
     }
@@ -135,6 +132,7 @@ export class ScraperService {
                 date: new Date(date).toISOString().split('T')[0],
             });
         });
+        console.log('All pages loaded');
         return jobDetails;
     }
 
@@ -184,6 +182,8 @@ export class ScraperService {
         jobSearchResult: JobSearchResult[],
         filePostfix?: string,
     ) {
+        console.log('getting job details');
+        Utils.processBar.start(jobSearchResult.length, 0);
         const failedToGetJobDetail = [];
         for (const job of jobSearchResult) {
             try {
@@ -191,21 +191,27 @@ export class ScraperService {
             } catch (error) {
                 failedToGetJobDetail.push(job);
                 console.log(`failed to get details of ${failedToGetJobDetail.length} jobs`);
+            } finally {
+                Utils.processBar.increment();
             }
         }
+
+        Utils.processBar.stop();
 
         const cleanedInternalJobs = await Utils.cleanData(this.internalJobsResult);
         const cleanedExternalJobs = await Utils.cleanData(this.externalJobsResult);
 
         // Write to CSV
+        console.log('writing to csv 📄');
         await this.csvService.writeCsv(cleanedInternalJobs, `internal-result${filePostfix}`);
         await this.csvService.writeCsv(cleanedExternalJobs, `external-result${filePostfix}`, false);
 
         // Write to DB
+        console.log('writing to db 💾');
         this.dbService.saveJobSearchResults(cleanedInternalJobs);
         if (failedToGetJobDetail.length)
             console.log('job details request failed', failedToGetJobDetail);
-        console.log('job details request successful');
+        console.log('job details processed successfully');
         return;
     }
 

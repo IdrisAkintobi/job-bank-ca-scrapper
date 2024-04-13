@@ -1,6 +1,10 @@
+import { Presets, SingleBar } from 'cli-progress';
+
 import { JobSearchResult } from '../domain/interface.job-search-result.js';
 
 export class Utils {
+    public static processBar = new SingleBar({}, Presets.shades_classic);
+
     public static async cleanData(
         data: Record<string, Omit<JobSearchResult, 'jobTitle'>[]>,
         internal = true,
