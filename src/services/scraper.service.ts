@@ -3,10 +3,10 @@ import { ConfigService } from '@nestjs/config';
 import { CheerioAPI, load } from 'cheerio';
 import { Browser, Page } from 'playwright';
 
-import { CsvService } from '../csv-writer/csv-writer.service.js';
-import { DbService } from '../db/db.service.js';
 import { JobSearchResult } from '../domain/interface.job-search-result.js';
 import { Utils } from '../utils/utils.js';
+import { CsvService } from './csv-writer.service.js';
+import { DbService } from './db.service.js';
 
 @Injectable()
 export class ScraperService {
@@ -187,6 +187,9 @@ export class ScraperService {
         const failedToGetJobDetail = [];
         for (const job of jobSearchResult) {
             try {
+                const jobId = Utils.extractJobId(job.href);
+                const jobExists = this.dbService.jobExists(jobId);
+                if (jobExists) continue;
                 await this.getJobDetails(page, job);
             } catch (error) {
                 failedToGetJobDetail.push(job);
@@ -208,7 +211,7 @@ export class ScraperService {
 
         // Write to DB
         console.log('writing to db 💾');
-        this.dbService.saveJobSearchResults(cleanedInternalJobs);
+        await this.dbService.saveJobSearchResults(cleanedInternalJobs);
         if (failedToGetJobDetail.length)
             console.log('job details request failed', failedToGetJobDetail);
         console.log('job details processed successfully');
