@@ -1,15 +1,12 @@
-// job-search.service.ts
 import { Inject, Injectable } from '@nestjs/common';
 import { Database } from 'better-sqlite3';
 import { JobSearchResult } from '../domain/interface.job-search-result';
 
 @Injectable()
 export class DbService {
-    constructor(@Inject('DATABASE') private readonly db: Database) {
-        this.createTableIfNotExists();
-    }
+    constructor(@Inject('DATABASE') private readonly db: Database) {}
 
-    private createTableIfNotExists() {
+    async createTableIfNotExists() {
         this.db
             .prepare(
                 `
@@ -30,7 +27,7 @@ export class DbService {
             .run();
     }
 
-    saveJobSearchResults(results: JobSearchResult[]) {
+    async saveJobSearchResults(results: JobSearchResult[]) {
         const insert = this.db.prepare(`
             INSERT OR IGNORE INTO jobs (jobTitle, href, business, location, salary, date, email, expiry, emailSent)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -56,15 +53,34 @@ export class DbService {
         })();
     }
 
-    getUnsentJobSearchResults(limit: number = 100) {
+    async getUnsentJobSearchResults(limit: number = 100) {
         return this.db
             .prepare('SELECT * FROM jobs WHERE emailSent = 0 LIMIT ?')
             .all(limit) as JobSearchResult[];
     }
 
-    updateEmailSent(href: string, email: string, business: string, emailSent: boolean) {
+    async getUnsentJobSearchResultsWithTitles(titles: string[], limit: number = 100) {
+        if (!titles.length) return this.getUnsentJobSearchResults(limit);
+
+        return this.db
+            .prepare(
+                'SELECT * FROM jobs WHERE emailSent = 0 AND jobTitle IN (' +
+                    titles.map(() => '?').join(',') +
+                    ') LIMIT ?',
+            )
+            .all([...titles, limit]) as JobSearchResult[];
+    }
+
+    async markAsSent(job: Pick<JobSearchResult, 'href' | 'email' | 'business'>) {
         this.db
-            .prepare('UPDATE jobs SET emailSent = ? WHERE href = ? AND email = ? AND business = ?')
-            .run(emailSent ? 1 : 0, href, email, business);
+            .prepare('UPDATE jobs SET emailSent = 1 WHERE href = ? AND email = ? AND business = ?')
+            .run(job.href, job.email, job.business);
+    }
+
+    async jobExists(jobId: string): Promise<boolean> {
+        const result = await this.db
+            .prepare('SELECT 1 FROM jobs WHERE href LIKE ?')
+            .get(`%/${jobId}%`);
+        return !!result;
     }
 }

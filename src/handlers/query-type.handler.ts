@@ -7,7 +7,7 @@ export const queryTypeHandler = async (): Promise<{ selectedQueryType: JobQueryT
         {
             type: 'confirm',
             name: 'userConsent',
-            message: 'Would you like to scrape Job bank ca?',
+            message: 'Would you like to scrape Job bank CA or send email to employers?',
             default: true,
         },
     ]);
@@ -21,7 +21,7 @@ export const queryTypeHandler = async (): Promise<{ selectedQueryType: JobQueryT
         {
             type: 'list',
             name: 'selectedQueryType',
-            message: 'Select the kind of jobs to query',
+            message: 'Select the kind of jobs to query or send email',
             choices: Object.values(JobQueryTypeEnum),
         },
     ]);

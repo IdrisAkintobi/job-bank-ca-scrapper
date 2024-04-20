@@ -1,7 +1,7 @@
 import inquirer from 'inquirer';
 
 export const searchQueryHandler = async (): Promise<{ jobTitle: string; jobLocation: string }> => {
-    const credentials = await inquirer.prompt([
+    const searchQuery = await inquirer.prompt([
         {
             type: 'input',
             name: 'jobTitle',
@@ -14,5 +14,5 @@ export const searchQueryHandler = async (): Promise<{ jobTitle: string; jobLocat
         },
     ]);
 
-    return { ...credentials };
+    return { ...searchQuery };
 };

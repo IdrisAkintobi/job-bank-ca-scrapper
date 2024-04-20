@@ -1,36 +1,29 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import Database from 'better-sqlite3';
 import { chromium } from 'playwright';
 
-import { AppController } from './app.controller.js';
 import { configValidationSchema } from './config/config.schema.js';
-import { CsvService } from './csv-writer/csv-writer.service.js';
-import { DbService } from './db/db.service.js';
-import { ScraperService } from './scraper/scraper.service.js';
+import { DatabaseModule } from './db/db.module.js';
+import { CsvService } from './services/csv-writer.service.js';
+import { EmailService } from './services/email.service.js';
+import { ScraperService } from './services/scraper.service.js';
 
 @Module({
     imports: [
+        DatabaseModule,
         ConfigModule.forRoot({
             isGlobal: true,
             validationSchema: configValidationSchema,
         }),
     ],
-    controllers: [AppController],
     providers: [
         ScraperService,
         CsvService,
-        DbService,
+        EmailService,
         {
             provide: 'BROWSER',
             useFactory: async () => {
                 return await chromium.launch();
-            },
-        },
-        {
-            provide: 'DATABASE',
-            useFactory: () => {
-                return new Database('db.sqlite');
             },
         },
     ],

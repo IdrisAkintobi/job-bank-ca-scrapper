@@ -1,0 +1,16 @@
+{
+    "moduleFileExtensions": ["js", "json", "ts"],
+    "testRegex": "\\.spec\\.ts$",
+    "transform": {
+        "^.+\\.ts$": "ts-jest"
+    },
+    "coverageDirectory": "coverage",
+    "collectCoverageFrom": ["src/**/*.ts"],
+    "coveragePathIgnorePatterns": ["src/main.functions.ts"],
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+        "@src/(.*)": "<rootDir>/src/$1",
+        "^(..?/.+).js?$": "$1"
+    },
+    "clearMocks": true
+}
