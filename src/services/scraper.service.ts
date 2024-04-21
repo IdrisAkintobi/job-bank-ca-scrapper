@@ -83,15 +83,17 @@ export class ScraperService {
             const email = $('#howtoapply a[href^="mailto:"]').text().trim();
             const expiry = $('p[property="validThrough"]').text().trim();
             // Check if the email element exists
-            if (email) {
+            if (email && !Utils.isExpired(expiry)) {
                 this.internalJobsResult[jobTitle] = this.internalJobsResult[jobTitle] || [];
                 this.internalJobsResult[jobTitle].push({ email, expiry, ...rest });
             }
         } else if (externalJob) {
             $ = load(await page.content());
             const expiry = $('p[property="validThrough"]').text().trim();
-            this.externalJobsResult[jobTitle] = this.externalJobsResult[jobTitle] || [];
-            this.externalJobsResult[jobTitle].push({ expiry, ...rest });
+            if (!Utils.isExpired(expiry)) {
+                this.externalJobsResult[jobTitle] = this.externalJobsResult[jobTitle] || [];
+                this.externalJobsResult[jobTitle].push({ expiry, ...rest });
+            }
         }
     }
 
@@ -182,6 +184,8 @@ export class ScraperService {
         jobSearchResult: JobSearchResult[],
         filePostfix?: string,
     ) {
+        const saveToDb = this.configService.get('SAVE_TO_DB');
+        const saveToCsv = this.configService.get('SAVE_TO_CSV');
         console.log('getting job details');
         Utils.processBar.start(jobSearchResult.length, 0);
         const failedToGetJobDetail = [];
@@ -205,15 +209,25 @@ export class ScraperService {
         const cleanedExternalJobs = await Utils.cleanData(this.externalJobsResult);
 
         // Write to CSV
-        console.log('writing to csv 📄');
-        await this.csvService.writeCsv(cleanedInternalJobs, `internal-result${filePostfix}`);
-        await this.csvService.writeCsv(cleanedExternalJobs, `external-result${filePostfix}`, false);
-
+        if (saveToCsv) {
+            console.log('writing to csv 📄');
+            await this.csvService.writeCsv(cleanedInternalJobs, `internal-result${filePostfix}`);
+            await this.csvService.writeCsv(
+                cleanedExternalJobs,
+                `external-result${filePostfix}`,
+                false,
+            );
+        }
         // Write to DB
-        console.log('writing to db 💾');
-        await this.dbService.saveJobSearchResults(cleanedInternalJobs);
-        if (failedToGetJobDetail.length)
+        if (saveToDb) {
+            console.log('writing to db 💾');
+            await this.dbService.saveJobSearchResults(cleanedInternalJobs);
+        }
+
+        if (failedToGetJobDetail.length) {
             console.log('job details request failed', failedToGetJobDetail);
+        }
+
         console.log('job details processed successfully');
         return;
     }

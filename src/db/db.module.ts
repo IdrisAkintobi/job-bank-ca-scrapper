@@ -18,6 +18,9 @@ export class DatabaseModule implements OnModuleInit {
     constructor(private readonly dbService: DbService) {}
 
     async onModuleInit() {
+        //create table
         await this.dbService.createTableIfNotExists();
+        //prune database
+        await this.dbService.pruneDb();
     }
 }

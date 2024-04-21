@@ -10,4 +10,6 @@ export const configValidationSchema = Joi.object({
     EMAIL_USER: Joi.string().required(),
     EMAIL_PASSWORD: Joi.string().required(),
     SENDER_NAME: Joi.string().required(),
+    SAVE_TO_DB: Joi.boolean().default(true),
+    SAVE_TO_CSV: Joi.boolean().required(),
 });

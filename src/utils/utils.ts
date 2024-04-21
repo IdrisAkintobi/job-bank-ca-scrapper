@@ -93,4 +93,9 @@ export class Utils {
             return null;
         }
     }
+
+    public static isExpired(expiryDateString: string | null): boolean {
+        if (!expiryDateString) return false;
+        return new Date() > new Date(expiryDateString);
+    }
 }

@@ -25,6 +25,7 @@ export class DbService {
         `,
             )
             .run();
+        console.log('Created table "jobs" if not exists 📝');
     }
 
     async saveJobSearchResults(results: JobSearchResult[]) {
@@ -55,7 +56,7 @@ export class DbService {
 
     async getUnsentJobSearchResults(limit: number = 100) {
         return this.db
-            .prepare('SELECT * FROM jobs WHERE emailSent = 0 LIMIT ?')
+            .prepare('SELECT * FROM jobs WHERE emailSent = 0 ORDER BY date DESC LIMIT ?')
             .all(limit) as JobSearchResult[];
     }
 
@@ -66,7 +67,7 @@ export class DbService {
             .prepare(
                 'SELECT * FROM jobs WHERE emailSent = 0 AND jobTitle IN (' +
                     titles.map(() => '?').join(',') +
-                    ') LIMIT ?',
+                    ') ORDER BY date DESC LIMIT ?',
             )
             .all([...titles, limit]) as JobSearchResult[];
     }
@@ -82,5 +83,11 @@ export class DbService {
             .prepare('SELECT 1 FROM jobs WHERE href LIKE ?')
             .get(`%/${jobId}%`);
         return !!result;
+    }
+
+    async pruneDb() {
+        const now = new Date().toISOString();
+        this.db.prepare('DELETE FROM jobs WHERE expiry < ?').run(now);
+        console.log('Database pruned 🧹');
     }
 }
