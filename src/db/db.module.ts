@@ -21,6 +21,6 @@ export class DatabaseModule implements OnModuleInit {
         //create table
         await this.dbService.createTableIfNotExists();
         //prune database
-        await this.dbService.pruneDb();
+        // await this.dbService.pruneDb();
     }
 }
