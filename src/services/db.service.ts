@@ -55,7 +55,7 @@ export class DbService {
 
     async getUnsentJobSearchResults(limit: number = 100) {
         return this.db
-            .prepare('SELECT * FROM jobs WHERE emailSent = 0 LIMIT ?')
+            .prepare('SELECT * FROM jobs WHERE emailSent = 0 ORDER BY date DESC LIMIT ?')
             .all(limit) as JobSearchResult[];
     }
 
@@ -66,7 +66,7 @@ export class DbService {
             .prepare(
                 'SELECT * FROM jobs WHERE emailSent = 0 AND jobTitle IN (' +
                     titles.map(() => '?').join(',') +
-                    ') LIMIT ?',
+                    ') ORDER BY date DESC LIMIT ?',
             )
             .all([...titles, limit]) as JobSearchResult[];
     }

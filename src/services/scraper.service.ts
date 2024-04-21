@@ -83,15 +83,17 @@ export class ScraperService {
             const email = $('#howtoapply a[href^="mailto:"]').text().trim();
             const expiry = $('p[property="validThrough"]').text().trim();
             // Check if the email element exists
-            if (email) {
+            if (email && !Utils.isExpired(expiry)) {
                 this.internalJobsResult[jobTitle] = this.internalJobsResult[jobTitle] || [];
                 this.internalJobsResult[jobTitle].push({ email, expiry, ...rest });
             }
         } else if (externalJob) {
             $ = load(await page.content());
             const expiry = $('p[property="validThrough"]').text().trim();
-            this.externalJobsResult[jobTitle] = this.externalJobsResult[jobTitle] || [];
-            this.externalJobsResult[jobTitle].push({ expiry, ...rest });
+            if (!Utils.isExpired(expiry)) {
+                this.externalJobsResult[jobTitle] = this.externalJobsResult[jobTitle] || [];
+                this.externalJobsResult[jobTitle].push({ expiry, ...rest });
+            }
         }
     }
 
