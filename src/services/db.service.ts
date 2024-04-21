@@ -25,6 +25,7 @@ export class DbService {
         `,
             )
             .run();
+        console.log('Created table "jobs" if not exists 📝');
     }
 
     async saveJobSearchResults(results: JobSearchResult[]) {
@@ -82,5 +83,11 @@ export class DbService {
             .prepare('SELECT 1 FROM jobs WHERE href LIKE ?')
             .get(`%/${jobId}%`);
         return !!result;
+    }
+
+    async pruneDb() {
+        const now = new Date().toISOString();
+        this.db.prepare('DELETE FROM jobs WHERE expiry < ?').run(now);
+        console.log('Database pruned 🧹');
     }
 }
