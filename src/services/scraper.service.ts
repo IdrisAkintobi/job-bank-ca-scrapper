@@ -188,7 +188,7 @@ export class ScraperService {
         for (const job of jobSearchResult) {
             try {
                 const jobId = Utils.extractJobId(job.href);
-                const jobExists = this.dbService.jobExists(jobId);
+                const jobExists = await this.dbService.jobExists(jobId);
                 if (jobExists) continue;
                 await this.getJobDetails(page, job);
             } catch (error) {

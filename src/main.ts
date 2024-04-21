@@ -64,4 +64,4 @@ async function startScraper() {
     }
 }
 
-startScraper();
+await startScraper();
