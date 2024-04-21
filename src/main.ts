@@ -14,9 +14,13 @@ import { ScraperService } from './services/scraper.service.js';
 async function startScraper() {
     try {
         // Ensure playwright is installed before running the script
-        const result = spawnSync('npx', ['playwright', 'install'], { stdio: 'inherit' });
+        const result = spawnSync('npx', ['playwright', 'install-deps && npx playwright install'], {
+            stdio: 'inherit',
+            shell: true,
+        });
+
         if (result.error || result.status !== 0) {
-            console.error('Failed to run "npx playwright install"');
+            console.error('Failed to run "npx playwright install"', result.error);
             process.exit(1);
         }
 
