@@ -7,10 +7,11 @@
     "license": "MIT",
     "type": "module",
     "scripts": {
-        "build": "nest build",
+        "build": "npm run install:playwright && nest build",
         "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
         "start": "nest start",
-        "start:dev": "nest start --watch -- start",
+        "install:playwright": "npx playwright install",
+        "start:dev": "npm run install:playwright && nest start --watch -- start",
         "start:debug": "nest start --debug --watch",
         "start:prod": "node dist/main",
         "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
